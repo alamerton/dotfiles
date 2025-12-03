@@ -1,57 +1,50 @@
 #!/bin/bash
-set -euo pipefail
-USAGE=$(cat <<-END
-    Usage: ./deploy.sh [OPTIONS] [--aliases <alias1,alias2,...>], eg. ./deploy.sh --vim --aliases=speechmatics,custom
-    Creates ~/.zshrc and ~/.tmux.conf with location
-    specific config
+# Deploy dotfiles - creates symlinks and sources configs
 
-    OPTIONS:
-        --vim                   deploy very simple vimrc config 
-        --aliases               specify additional alias scripts to source in .zshrc, separated by commas
-END
-)
+set -e
 
-export DOT_DIR=$(dirname $(realpath $0))
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_DIR="$DOTFILES_DIR/config"
 
-VIM="false"
-ALIASES=()
-while (( "$#" )); do
-    case "$1" in
-        -h|--help)
-            echo "$USAGE" && exit 1 ;;
-        --vim)
-            VIM="true" && shift ;;
-        --aliases=*)
-            IFS=',' read -r -a ALIASES <<< "${1#*=}" && shift ;;
-        --) # end argument parsing
-            shift && break ;;
-        -*|--*=) # unsupported flags
-            echo "Error: Unsupported flag $1" >&2 && exit 1 ;;
-    esac
-done
+log() { echo "[deploy] $1"; }
 
-echo "deploying on machine..."
-echo "using extra aliases: ${ALIASES[@]}"
-
-# Tmux setup
-echo "source $DOT_DIR/config/tmux.conf" > $HOME/.tmux.conf
-
-# Vimrc
-if [[ $VIM == "true" ]]; then
-    echo "deploying .vimrc"
-    echo "source $DOT_DIR/config/vimrc" > $HOME/.vimrc
+# --- tmux ---
+if [ -f "$CONFIG_DIR/tmux.conf" ]; then
+    ln -sf "$CONFIG_DIR/tmux.conf" ~/.tmux.conf
+    log "Linked ~/.tmux.conf"
 fi
 
-# zshrc setup
-echo "source $DOT_DIR/config/zshrc.sh" > $HOME/.zshrc
-# Append additional alias scripts if specified
-if [ -n "${ALIASES+x}" ]; then
-    for alias in "${ALIASES[@]}"; do
-        echo "source $DOT_DIR/config/aliases_${alias}.sh" >> $HOME/.zshrc
-    done
+# --- neovim ---
+if [ -d "$CONFIG_DIR/nvim" ]; then
+    mkdir -p ~/.config
+    rm -rf ~/.config/nvim
+    ln -sf "$CONFIG_DIR/nvim" ~/.config/nvim
+    log "Linked ~/.config/nvim"
 fi
 
-echo "changing default shell to zsh"
-chsh -s $(which zsh)
+# --- aliases ---
+if [ -f "$CONFIG_DIR/aliases.sh" ]; then
+    BASHRC_LINE="source $CONFIG_DIR/aliases.sh"
+    if ! grep -qF "$BASHRC_LINE" ~/.bashrc 2>/dev/null; then
+        echo "" >> ~/.bashrc
+        echo "# Dotfiles aliases" >> ~/.bashrc
+        echo "$BASHRC_LINE" >> ~/.bashrc
+        log "Added aliases.sh to ~/.bashrc"
+    else
+        log "aliases.sh already in ~/.bashrc"
+    fi
+fi
 
-zsh
+# --- zsh support (if using zsh) ---
+if [ -f ~/.zshrc ]; then
+    ZSHRC_LINE="source $CONFIG_DIR/aliases.sh"
+    if ! grep -qF "$ZSHRC_LINE" ~/.zshrc 2>/dev/null; then
+        echo "" >> ~/.zshrc
+        echo "# Dotfiles aliases" >> ~/.zshrc
+        echo "$ZSHRC_LINE" >> ~/.zshrc
+        log "Added aliases.sh to ~/.zshrc"
+    fi
+fi
+
+echo ""
+log "Deploy complete. Run 'source ~/.bashrc' to apply."
