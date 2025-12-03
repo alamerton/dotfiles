@@ -131,6 +131,13 @@ deploy_configs() {
     fi
 }
 
+# Install Cursor extensions
+if command -v cursor &>/dev/null && [ -f "$DOTFILES_DIR/config/cursor-extensions.txt" ]; then
+    while read -r ext; do
+        cursor --install-extension "$ext"
+    done < "$DOTFILES_DIR/config/cursor-extensions.txt"
+fi
+
 # --- Git ---
 setup_git() {
     log_section "Git"
