@@ -58,3 +58,7 @@ alias reqs="pip install -r requirements_clean.txt"
 alias reload="source ~/.bashrc"
 alias path='echo $PATH | tr ":" "\n"'
 alias ports="netstat -tulanp"
+
+# --- Claude ---
+alias claude-nonroot="sudo -u alfie /usr/bin/claude"
+alias claude-dsp="claude --dangerously-skip-permissions"
