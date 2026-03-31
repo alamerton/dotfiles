@@ -60,5 +60,4 @@ alias path='echo $PATH | tr ":" "\n"'
 alias ports="netstat -tulanp"
 
 # --- Claude ---
-alias claude-nonroot="sudo -u alfie /usr/bin/claude"
-alias claude-dsp="claude --dangerously-skip-permissions"
+export PATH="/workspace/dotfiles/custom_bins:$PATH"

@@ -1,0 +1,24 @@
+#!/bin/bash
+# Wrapper to run claude --dangerously-skip-permissions on RunPod (which runs as root)
+# Claude blocks --dangerously-skip-permissions as root, so we use a non-root user.
+
+set -e
+
+CLAUDE_BIN="$(which claude 2>/dev/null || echo /usr/bin/claude)"
+DSP_USER="alfie"
+
+# Ensure non-root user exists
+if ! id "$DSP_USER" &>/dev/null; then
+    useradd -m -s /bin/bash "$DSP_USER"
+    usermod -aG root "$DSP_USER"
+    chmod g+rwx /workspace
+fi
+
+# Sync credentials from root -> alfie (fast, runs every time to stay fresh)
+mkdir -p "/home/$DSP_USER/.claude"
+cp -a /root/.claude/. "/home/$DSP_USER/.claude/" 2>/dev/null || true
+[ -f /root/.claude.json ] && cp /root/.claude.json "/home/$DSP_USER/.claude.json"
+chown -R "$DSP_USER:$DSP_USER" "/home/$DSP_USER/.claude" "/home/$DSP_USER/.claude.json" 2>/dev/null
+
+# Pass through all args, preserve API key if set
+exec sudo --preserve-env=ANTHROPIC_API_KEY -u "$DSP_USER" "$CLAUDE_BIN" --dangerously-skip-permissions "$@"
