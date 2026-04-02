@@ -7,6 +7,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/env_vars.sh"
 
+# RunPod runs as root; sudo is unnecessary and often absent
+if [ "$(id -u)" -eq 0 ] || ! command -v sudo &>/dev/null; then
+    sudo() {
+        while [[ "$1" == -* ]]; do shift; done
+        "$@"
+    }
+fi
 log() { echo "[$(date '+%H:%M:%S')] $1"; }
 log_section() { echo ""; echo "=== $1 ==="; }
 
@@ -83,7 +90,7 @@ install_system_packages() {
 # --- Node.js & Claude Code ---
 install_node_claude() {
     log_section "Node.js & Claude Code"
-    
+
     if ! command -v node &>/dev/null; then
         curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
         sudo apt-get install -y nodejs
@@ -91,7 +98,7 @@ install_node_claude() {
     else
         log "Node.js present"
     fi
-    
+
     if ! command -v claude &>/dev/null; then
         sudo npm install -g @anthropic-ai/claude-code
         log "Claude Code installed"

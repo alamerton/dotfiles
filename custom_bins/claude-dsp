@@ -14,6 +14,11 @@ if ! id "$DSP_USER" &>/dev/null; then
     chmod g+rwx /workspace
 fi
 
+# If not authenticated yet, run claude as root to trigger login first
+if [ ! -f /root/.claude.json ]; then
+    "$CLAUDE_BIN"
+fi
+
 # Sync credentials from root -> alfie (fast, runs every time to stay fresh)
 mkdir -p "/home/$DSP_USER/.claude"
 cp -a /root/.claude/. "/home/$DSP_USER/.claude/" 2>/dev/null || true
