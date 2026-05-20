@@ -88,19 +88,27 @@ install_system_packages() {
 }
 
 # --- Node.js & Claude Code ---
+# Install via conda so node lives on /workspace and survives pod restarts.
+# Claude Code's postinstall uses optional chaining, so node must be >= 18.
 install_node_claude() {
     log_section "Node.js & Claude Code"
 
-    if ! command -v node &>/dev/null; then
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-        sudo apt-get install -y nodejs
-        log "Node.js installed"
+    local min_major=18
+    local current_major=0
+    if command -v node &>/dev/null; then
+        current_major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
+    fi
+
+    if [ "$current_major" -lt "$min_major" ]; then
+        conda install -y -c conda-forge 'nodejs>=20'
+        hash -r
+        log "Node.js installed ($(node --version))"
     else
-        log "Node.js present"
+        log "Node.js present ($(node --version))"
     fi
 
     if ! command -v claude &>/dev/null; then
-        sudo npm install -g @anthropic-ai/claude-code
+        npm install -g @anthropic-ai/claude-code
         log "Claude Code installed"
     else
         log "Claude Code present"
