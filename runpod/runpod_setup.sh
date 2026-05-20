@@ -69,7 +69,7 @@ fi
 # pod restarts (apt-installed packages on / do not persist on RunPod).
 echo "Installing Node.js and Claude Code..."
 if ! command -v node &> /dev/null; then
-    conda install -y -c conda-forge nodejs
+    conda install -y -c conda-forge 'nodejs>=20'
     echo "Node.js installed successfully"
 else
     echo "Node.js already installed, skipping..."
