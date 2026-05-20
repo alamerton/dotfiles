@@ -65,10 +65,11 @@ else
 fi
 
 # 4. Install Node.js and Claude Code
+# Install via conda so it lives on the /workspace network volume and survives
+# pod restarts (apt-installed packages on / do not persist on RunPod).
 echo "Installing Node.js and Claude Code..."
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    conda install -y -c conda-forge nodejs
     echo "Node.js installed successfully"
 else
     echo "Node.js already installed, skipping..."
@@ -76,7 +77,7 @@ fi
 
 if ! command -v claude &> /dev/null; then
     echo "Installing Claude Code..."
-    sudo npm install -g @anthropic-ai/claude-code
+    npm install -g @anthropic-ai/claude-code
     echo "Claude Code installed successfully"
 else
     echo "Claude Code already installed, skipping..."
