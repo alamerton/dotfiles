@@ -5,7 +5,14 @@
 alias ..="cd .."
 alias ...="cd ../.."
 alias ws="cd /workspace"
-alias sl="cd /workspace/Secret-Loyalty-Pilot"
+# Project checkout is named differently on different network volumes
+for _sl_dir in /workspace/secret-loyalties /workspace/Secret-Loyalty-Pilot; do
+    if [ -d "$_sl_dir" ]; then
+        alias sl="cd $_sl_dir"
+        break
+    fi
+done
+unset _sl_dir
 
 # --- Git ---
 alias g="git"
@@ -52,7 +59,7 @@ alias gpumem="nvidia-smi --query-gpu=memory.used,memory.total --format=csv"
 # --- Project-specific ---
 alias petri="python -m petri"
 alias pytest="python -m pytest -v"
-alias reqs="pip install -r requirements_clean.txt"
+alias reqs="pip install -r requirements.txt"
 
 # --- Utilities ---
 alias reload="source ~/.bashrc"
